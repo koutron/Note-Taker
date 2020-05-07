@@ -14,14 +14,17 @@ app.use(express.json());
 //Anything in the public directory can be requested (i.e. an HTML file requesting a CSS file)
 app.use(express.static('public'));
 
+//Homepage
 app.get("/", function (req, res) {
     res.sendFile(path.join(__dirname, "/public/index.html"));
 });
 
+//Notes page
 app.get("/notes", function (req, res) {
     res.sendFile(path.join(__dirname, "/public/notes.html"));
 });
 
+//Route for returning all notes
 app.get("/api/notes", function (req, res) {
     fs.readFile("./db/db.json", "utf8", function (err, data) {
         if (err) throw err;
@@ -30,12 +33,14 @@ app.get("/api/notes", function (req, res) {
     });
 });
 
+//Route for creating new note
 app.post("/api/notes", function(req, res){
     const newNote = {title: req.body.title, text: req.body.text};
     fs.readFile("./db/db.json", "utf8", function (err, data) {
         if (err) throw err;
         data = JSON.parse(data);
         data.push(newNote);
+        //After new note generated, re-assign all IDs so new note recieves an ID
         data = assignIds(data);
         data = JSON.stringify(data);
         fs.writeFile("./db/db.json", data, function(err){
@@ -45,13 +50,15 @@ app.post("/api/notes", function(req, res){
     res.json(newNote);
 });
 
+//Route for deleting a note
 app.delete("/api/notes/:id", function(req, res){
     const deleteId = req.params.id;
-    console.log(deleteId);
     fs.readFile("./db/db.json", "utf8", function (err, data) {
         if (err) throw err;
         data = JSON.parse(data);
+        //Remove selected note
         data.splice(deleteId, 1);
+        //Reassign all IDs after note deletion
         data = assignIds(data);
         res.json(data);
         data = JSON.stringify(data);
@@ -71,6 +78,5 @@ function assignIds(data){
         note.id=id;
         id++;
     });
-    console.log(data);
     return data;
 }
